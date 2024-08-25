@@ -13,7 +13,7 @@ SECRET_KEY = (
 
 DEBUG = True
 BASE_URL = "http://127.0.0.1:8000/"
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS','localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS','localhost,127.0.0.1,158.160.83.152,avpetr.zapto.org;').split(',')
 
 
 
