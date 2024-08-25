@@ -10,11 +10,6 @@ echo "from django.contrib.auth import get_user_model;\
  tag3 = Tag(name='Острый', slug='ostrij');\
  tag1.save();\
  tag2.save();\
- tag3.save();\
- ingr1 = Ingredient(name='Помидор', measurement_unit='кг');\
- ingr2 = Ingredient(name='Огурец', measurement_unit='кг');\
- ingr3 = Ingredient(name='Соль', measurement_unit='г');\
- ingr1.save();\
- ingr2.save();\
- ingr3.save();" | python manage.py shell
+ tag3.save(); "| python manage.py shell
+ python manage.py load_ingredients ../data/ingredients.csv
 python manage.py runserver

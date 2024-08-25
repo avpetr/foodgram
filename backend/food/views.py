@@ -1,6 +1,7 @@
 import csv
 from io import StringIO
 
+from rest_framework.filters import SearchFilter
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
@@ -33,9 +34,18 @@ class IngredientViewSet(viewsets.ModelViewSet):
     serializer_class = IngredientSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = None
-    filter_backends = [DjangoFilterBackend]
+    
+    filter_backends = [SearchFilter]
+    search_fields = ['^name'] 
+
     http_method_names = ["get"]
-    filterset_fields = ["name"]
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        name = self.request.query_params.get('name', None)
+        if name:
+            queryset = queryset.filter(name__istartswith=name)
+        return queryset
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
@@ -176,7 +186,7 @@ class DownloadShoppingCart(APIView):
         output.seek(0)
         response = Response(output.getvalue(), content_type="text/csv")
         response["Content-Disposition"] = (
-            'attachment; filename="shopping_list.csv"'
+            'attachment; filename="shopping_list.txt"'
         )
 
         return response

@@ -115,7 +115,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 
         seen_ingredient_ids = set()
         for ingredient_data in ingredients_data:
-            if ingredient_data["amount"] < 1:
+            if int(ingredient_data["amount"]) < 1:
                 raise ValidationError("Ingredient amount must be at least 1.")
             if ingredient_data["id"] in seen_ingredient_ids:
                 raise ValidationError("Duplicate ingredients are not allowed.")
