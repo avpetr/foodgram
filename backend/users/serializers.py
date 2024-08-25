@@ -8,7 +8,7 @@ from rest_framework.exceptions import ValidationError
 from food.models import Recipe
 from users.models import CustomUser, Subscription
 
-CustomUser = get_user_model()
+CustomUser = get_user_model()  # noqa: F811
 
 
 class CustomUserSerializer(serializers.ModelSerializer):

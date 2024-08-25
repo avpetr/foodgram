@@ -1,24 +1,17 @@
 import csv
 from io import StringIO
 
-from rest_framework.filters import SearchFilter
 from django.shortcuts import get_object_or_404
-from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
-from rest_framework.permissions import (
-    IsAuthenticated,
-    IsAuthenticatedOrReadOnly,
-)
+from rest_framework.filters import SearchFilter
+from rest_framework.permissions import (IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from food.models import FavoriteRecipe, Ingredient, Recipe, ShoppingList, Tag
-from food.serializers import (
-    IngredientSerializer,
-    RecipeSerializer,
-    RecipeShortSerializer,
-    TagSerializer,
-)
+from food.serializers import (IngredientSerializer, RecipeSerializer,
+                              RecipeShortSerializer, TagSerializer)
 
 
 class TagViewSet(viewsets.ModelViewSet):
@@ -34,15 +27,15 @@ class IngredientViewSet(viewsets.ModelViewSet):
     serializer_class = IngredientSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
     pagination_class = None
-    
+
     filter_backends = [SearchFilter]
-    search_fields = ['^name'] 
+    search_fields = ["^name"]
 
     http_method_names = ["get"]
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        name = self.request.query_params.get('name', None)
+        name = self.request.query_params.get("name", None)
         if name:
             queryset = queryset.filter(name__istartswith=name)
         return queryset
@@ -92,9 +85,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
 
         if instance.author != request.user:
+            message = "You do not have permission to delete this recipe."
             return Response(
                 {
-                    "detail": "You do not have permission to delete this recipe."
+                    "detail": message
                 },
                 status=status.HTTP_403_FORBIDDEN,
             )

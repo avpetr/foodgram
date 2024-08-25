@@ -92,7 +92,8 @@ class ShoppingListItem(models.Model):
     amount = models.DecimalField(max_digits=6, decimal_places=2)
 
     def __str__(self):
-        return f"{self.amount} of {self.ingredient.name} in Shopping List {self.shopping_list.id}"
+        return (f"{self.amount} of {self.ingredient.name}"
+                f"in Shopping List {self.shopping_list.id}")
 
 
 class FavoriteRecipe(models.Model):

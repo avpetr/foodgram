@@ -2,15 +2,8 @@ from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied, ValidationError
 
-from food.models import (
-    FavoriteRecipe,
-    Ingredient,
-    Recipe,
-    RecipeIngredients,
-    ShoppingList,
-    ShoppingListItem,
-    Tag,
-)
+from food.models import (FavoriteRecipe, Ingredient, Recipe, RecipeIngredients,
+                         ShoppingList, ShoppingListItem, Tag)
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -147,7 +140,8 @@ class RecipeSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         if request and request.user != instance.author:
             raise PermissionDenied(
-                "Вы не можете редактировать этот рецепт, так как не являетесь его автором."
+                "Вы не можете редактировать этот рецепт, "
+                "так как не являетесь его автором."
             )
 
         tags_data = self.context["request"].data.get("tags", [])
