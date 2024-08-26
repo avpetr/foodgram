@@ -80,10 +80,18 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return instance
 
     def perform_update(self, serializer):
-        tags = self.request.data.get("tags", [])
-        instance = serializer.save()
+        instance = self.get_object()
+        data = self.request.data.copy()
+        if 'image' not in data:
+            data['image'] = instance.image
+        updated_serializer = self.get_serializer(instance, data=data, partial=True)
+        updated_serializer.is_valid(raise_exception=True)
+        self.perform_update(updated_serializer)
+        tags = data.get("tags", [])
         instance.tags.set(tags)
-        return instance
+
+        return Response(updated_serializer.data)
+
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()

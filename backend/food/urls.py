@@ -23,7 +23,6 @@ urlpatterns = [
         ),
         name="recipe-favorite",
     ),
-    path('recipes/<int:pk>/', RecipeViewSet.as_view({'get': 'retrieve'}), name='recipe-detail'),
     path(
         "recipes/<int:pk>/get-link/",
         GetShortLinkView.as_view(),
