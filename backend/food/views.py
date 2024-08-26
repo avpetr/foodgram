@@ -1,13 +1,16 @@
 import csv
 from io import StringIO
 
-from django.shortcuts import get_object_or_404
+from django.conf import settings
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect
+
 from rest_framework import status, viewsets
 from rest_framework.filters import SearchFilter
 from rest_framework.permissions import (IsAuthenticated,
-                                        IsAuthenticatedOrReadOnly)
+                                        IsAuthenticatedOrReadOnly, AllowAny)
 from rest_framework.response import Response
-from rest_framework.views import APIView
+from rest_framework.views import APIView, View
 
 from food.models import FavoriteRecipe, Ingredient, Recipe, ShoppingList, Tag
 from food.serializers import (IngredientSerializer, RecipeSerializer,
@@ -37,6 +40,7 @@ class IngredientViewSet(viewsets.ModelViewSet):
         queryset = super().get_queryset()
         name = self.request.query_params.get("name", None)
         if name:
+            name = name.lower()
             queryset = queryset.filter(name__istartswith=name)
         return queryset
 
@@ -96,14 +100,18 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return super().destroy(request, *args, **kwargs)
 
 
-class RecipeShortLinkView(APIView):
-    permission_classes = [IsAuthenticatedOrReadOnly]
+class RedirectShortLinkView(View):
+    def get(self, request, short_hash):
+        recipe = get_object_or_404(Recipe, short_link=short_hash)
+        return redirect(f"{settings.BASE_URL}recipes/{recipe.id}/")
 
-    def get(self, request, pk, *args, **kwargs):
+class GetShortLinkView(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request, pk):
         recipe = get_object_or_404(Recipe, pk=pk)
         short_link = recipe.get_short_link()
-        return Response({"short-link": short_link}, status=status.HTTP_200_OK)
-
+        full_short_link = f"{settings.BASE_URL}api/s/{short_link}/"
+        return Response({'short-link': full_short_link}, status=200)
 
 class ManageShoppingCart(APIView):
     permission_classes = [IsAuthenticated]

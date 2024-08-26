@@ -36,8 +36,9 @@ class MyUserAdmin(UserAdmin):
 
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
-    list_display = ("user", "subscribed_to")  # Выводимые поля в админке
+    list_display = ("user", "subscribed_to")  
     search_fields = (
         "user__username",
+        "user__email",
         "subscribed_to__username",
-    )  # Поля, по которым можно искать
+    ) 

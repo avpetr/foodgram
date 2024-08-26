@@ -19,7 +19,6 @@ class RecipeFilter(django_filters.FilterSet):
         ]
 
     def filter_is_favorited(self, queryset, name, value):
-        print(f"Фильтр избранного вызван с value={value}")
         if not self.request.user.is_authenticated:
             return queryset.none()
         if value:
@@ -27,7 +26,6 @@ class RecipeFilter(django_filters.FilterSet):
         return queryset
 
     def filter_is_in_shopping_cart(self, queryset, name, value):
-        print(f"Фильтр корзины вызван с value={value}")
         if not self.request.user.is_authenticated:
             return queryset.none()
         if value:
@@ -35,5 +33,4 @@ class RecipeFilter(django_filters.FilterSet):
         return queryset
 
     def __init__(self, *args, **kwargs):
-        print("RecipeFilter инициализирован")
         super().__init__(*args, **kwargs)
