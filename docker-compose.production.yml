@@ -20,7 +20,7 @@ services:
       - db
     volumes:
       - static_volume:/backend_static
-      - media:/media/
+      - media:/app/media
 
   frontend:
     image: avpetr/foodgram_frontend
@@ -39,6 +39,6 @@ services:
       - frontend
     volumes:
       - static_volume:/static/
-      - media:/media/
+      - media:/app/media
     ports:
       - 8000:80
