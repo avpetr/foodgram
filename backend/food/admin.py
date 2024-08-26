@@ -1,6 +1,6 @@
 from django.contrib import admin
-from food.models import (FavoriteRecipe, Ingredient, Recipe, RecipeIngredients,
-                         ShoppingList, ShoppingListItem, Tag)
+from .models import (FavoriteRecipe, Ingredient, Recipe, RecipeIngredients,
+                     ShoppingList, ShoppingListItem, Tag)
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
@@ -19,21 +19,18 @@ class RecipeIngredientsInline(admin.TabularInline):
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ["id", "name", "author", "favorite_count"]  # Добавляем метод `favorite_count`
+    list_display = ["id", "name", "author", "get_favorites_count"]
     search_fields = ["name", "author__username"]
-    list_filter = ["tags"]  # Фильтрация по тегам
+    list_filter = ["tags"]
     inlines = [RecipeIngredientsInline]
 
-    def favorite_count(self, obj):
-        return obj.favorite_set.count()  # Предполагается, что у Recipe есть связь с FavoriteRecipe
-    favorite_count.short_description = "Favorite Count"
+    def get_favorites_count(self, obj):
+        return obj.favorited_by.count()
+    get_favorites_count.short_description = "Количество добавлений в избранное"
 
 @admin.register(ShoppingList)
 class ShoppingListAdmin(admin.ModelAdmin):
-    list_display = [
-        "id",
-        "user",
-    ]
+    list_display = ["id", "user"]
     search_fields = ["user__username"]
     filter_horizontal = ["recipes"]
 
@@ -48,6 +45,6 @@ class ShoppingListItemAdmin(admin.ModelAdmin):
 
 @admin.register(FavoriteRecipe)
 class FavoriteRecipeAdmin(admin.ModelAdmin):
-    list_display = ("user", "recipe")
-    list_filter = ("user", "recipe")
-    search_fields = ("user__username", "recipe__name")
+    list_display = ["user", "recipe"]
+    list_filter = ["user", "recipe"]
+    search_fields = ["user__username", "recipe__name"]
