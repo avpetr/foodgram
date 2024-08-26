@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY', get_random_secret_key())
 # DEBUG = os.getenv('DEBUG','').lower() == 'true'
-DEBUG = True
+DEBUG = False
 BASE_URL = "http://127.0.0.1:8000/"
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS','localhost,127.0.0.1').split(',')
 
