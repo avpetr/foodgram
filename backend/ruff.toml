@@ -27,7 +27,6 @@ exclude = [
     "venv",
     "__pycache__",
     "migrations",
-    "settings.py"
 ]
 
 line-length = 79

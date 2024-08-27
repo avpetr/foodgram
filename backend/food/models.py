@@ -111,9 +111,11 @@ class RecipeIngredients(models.Model):
         verbose_name_plural = "Ингредиенты рецепта"
 
     def __str__(self):
-        return (f"{self.ingredient.name} ({self.amount} "
-                f"{self.ingredient.measurement_unit}"
-                f"в {self.recipe.name}")
+        return (
+            f"{self.ingredient.name} ({self.amount} "
+            f"{self.ingredient.measurement_unit}"
+            f"в {self.recipe.name}"
+        )
 
 
 class ShoppingList(models.Model):
@@ -170,9 +172,11 @@ class ShoppingListItem(models.Model):
         verbose_name_plural = "Элементы списка покупок"
 
     def __str__(self):
-        return (f"{self.amount} {self.ingredient.measurement_unit} "
-                f"{self.ingredient.name}"
-                f" в списке покупок {self.shopping_list.id}")
+        return (
+            f"{self.amount} {self.ingredient.measurement_unit} "
+            f"{self.ingredient.name}"
+            f" в списке покупок {self.shopping_list.id}"
+        )
 
 
 class FavoriteRecipe(models.Model):
@@ -195,5 +199,7 @@ class FavoriteRecipe(models.Model):
         verbose_name_plural = "Избранные рецепты"
 
     def __str__(self):
-        return (f"Рецепт {self.recipe.name} добавлен"
-                f" в избранное пользователем {self.user.username}")
+        return (
+            f"Рецепт {self.recipe.name} добавлен"
+            f" в избранное пользователем {self.user.username}"
+        )
