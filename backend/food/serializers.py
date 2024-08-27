@@ -1,9 +1,15 @@
 from drf_extra_fields.fields import Base64ImageField
+from food.models import (
+    FavoriteRecipe,
+    Ingredient,
+    Recipe,
+    RecipeIngredients,
+    ShoppingList,
+    ShoppingListItem,
+    Tag,
+)
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied, ValidationError
-
-from food.models import (FavoriteRecipe, Ingredient, Recipe, RecipeIngredients,
-                         ShoppingList, ShoppingListItem, Tag)
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -189,4 +195,3 @@ class FavoriteRecipeSerializer(serializers.ModelSerializer):
     class Meta:
         model = FavoriteRecipe
         fields = ("id", "recipe")
-        

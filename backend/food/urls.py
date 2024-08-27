@@ -1,9 +1,15 @@
 from django.urls import include, path
+from food.views import (
+    DownloadShoppingCart,
+    FavoriteRecipeViewSet,
+    GetShortLinkView,
+    IngredientViewSet,
+    ManageShoppingCart,
+    RecipeViewSet,
+    RedirectShortLinkView,
+    TagViewSet,
+)
 from rest_framework.routers import DefaultRouter
-
-from food.views import (DownloadShoppingCart, FavoriteRecipeViewSet,
-                    IngredientViewSet, ManageShoppingCart,
-                    RecipeViewSet, TagViewSet, RedirectShortLinkView, GetShortLinkView)
 
 router = DefaultRouter()
 router.register(r"tags", TagViewSet)
@@ -11,8 +17,11 @@ router.register(r"ingredients", IngredientViewSet)
 router.register(r"recipes", RecipeViewSet)
 
 urlpatterns = [
-    path('s/<str:short_hash>/', RedirectShortLinkView.as_view(), name='short_link'),
-    
+    path(
+        "s/<str:short_hash>/",
+        RedirectShortLinkView.as_view(),
+        name="short_link",
+    ),
     path(
         "recipes/<int:recipe_id>/favorite/",
         FavoriteRecipeViewSet.as_view(
@@ -28,7 +37,6 @@ urlpatterns = [
         GetShortLinkView.as_view(),
         name="recipe-get-link",
     ),
-    
     path(
         "recipes/<int:recipe_id>/shopping_cart/",
         ManageShoppingCart.as_view(),
@@ -40,5 +48,4 @@ urlpatterns = [
         name="download-shopping-cart",
     ),
     path("", include(router.urls)),
-    
 ]

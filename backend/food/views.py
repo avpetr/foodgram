@@ -2,19 +2,23 @@ import csv
 from io import StringIO
 
 from django.conf import settings
-from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
-
+from food.models import FavoriteRecipe, Ingredient, Recipe, ShoppingList, Tag
+from food.serializers import (
+    IngredientSerializer,
+    RecipeSerializer,
+    RecipeShortSerializer,
+    TagSerializer,
+)
 from rest_framework import status, viewsets
 from rest_framework.filters import SearchFilter
-from rest_framework.permissions import (IsAuthenticated,
-                                        IsAuthenticatedOrReadOnly, AllowAny)
+from rest_framework.permissions import (
+    AllowAny,
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly,
+)
 from rest_framework.response import Response
 from rest_framework.views import APIView, View
-
-from food.models import FavoriteRecipe, Ingredient, Recipe, ShoppingList, Tag
-from food.serializers import (IngredientSerializer, RecipeSerializer,
-                              RecipeShortSerializer, TagSerializer)
 
 
 class TagViewSet(viewsets.ModelViewSet):
@@ -82,9 +86,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         instance = self.get_object()
         data = self.request.data.copy()
-        if 'image' not in data:
-            data['image'] = instance.image
-        updated_serializer = self.get_serializer(instance, data=data, partial=True)
+        if "image" not in data:
+            data["image"] = instance.image
+        updated_serializer = self.get_serializer(
+            instance, data=data, partial=True
+        )
         updated_serializer.is_valid(raise_exception=True)
         self.perform_update(updated_serializer)
         tags = data.get("tags", [])
@@ -92,16 +98,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         return Response(updated_serializer.data)
 
-
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
 
         if instance.author != request.user:
             message = "You do not have permission to delete this recipe."
             return Response(
-                {
-                    "detail": message
-                },
+                {"detail": message},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
@@ -113,13 +116,16 @@ class RedirectShortLinkView(View):
         recipe = get_object_or_404(Recipe, short_link=short_hash)
         return redirect(f"{settings.BASE_URL}recipes/{recipe.id}/")
 
+
 class GetShortLinkView(APIView):
     permission_classes = [AllowAny]
+
     def get(self, request, pk):
         recipe = get_object_or_404(Recipe, pk=pk)
         short_link = recipe.get_short_link()
         full_short_link = f"{settings.BASE_URL}api/s/{short_link}/"
-        return Response({'short-link': full_short_link}, status=200)
+        return Response({"short-link": full_short_link}, status=200)
+
 
 class ManageShoppingCart(APIView):
     permission_classes = [IsAuthenticated]

@@ -1,7 +1,12 @@
 from django.conf import settings
-from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager, PermissionsMixin)
+from django.contrib.auth.models import (
+    AbstractBaseUser,
+    BaseUserManager,
+    PermissionsMixin,
+)
 from django.core.validators import RegexValidator
 from django.db import models
+
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -17,6 +22,7 @@ class CustomUserManager(BaseUserManager):
 
         return self.create_user(email, password, **extra_fields)
 
+
 class CustomUser(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(unique=True, verbose_name="Электронная почта")
     username = models.CharField(
@@ -28,7 +34,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
                 code="invalid_registration",
             ),
         ],
-        verbose_name="Имя пользователя"
+        verbose_name="Имя пользователя",
     )
     first_name = models.CharField(max_length=150, verbose_name="Имя")
     last_name = models.CharField(max_length=150, verbose_name="Фамилия")
@@ -50,18 +56,19 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return f"{self.first_name} {self.last_name} ({self.email})"
 
+
 class Subscription(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         related_name="subscriptions",
         on_delete=models.CASCADE,
-        verbose_name="Пользователь"
+        verbose_name="Пользователь",
     )
     subscribed_to = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         related_name="subscribers",
         on_delete=models.CASCADE,
-        verbose_name="Подписанный пользователь"
+        verbose_name="Подписанный пользователь",
     )
 
     class Meta:

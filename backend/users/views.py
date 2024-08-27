@@ -3,12 +3,13 @@ from rest_framework import generics, status, viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-
 from users.models import Subscription
 from users.pagination import CustomPagination
-from users.serializers import (CustomUserSerializer,
-                               CustomUserSubscriptionSerializer,
-                               UserAvatarSerializer)
+from users.serializers import (
+    CustomUserSerializer,
+    CustomUserSubscriptionSerializer,
+    UserAvatarSerializer,
+)
 
 CustomUser = get_user_model()
 

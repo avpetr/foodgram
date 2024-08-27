@@ -1,6 +1,5 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-
 from users.models import CustomUser, Subscription
 
 
@@ -36,9 +35,9 @@ class MyUserAdmin(UserAdmin):
 
 @admin.register(Subscription)
 class SubscriptionAdmin(admin.ModelAdmin):
-    list_display = ("user", "subscribed_to")  
+    list_display = ("user", "subscribed_to")
     search_fields = (
         "user__username",
         "user__email",
         "subscribed_to__username",
-    ) 
+    )

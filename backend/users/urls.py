@@ -1,5 +1,4 @@
 from django.urls import include, path
-
 from users.views import SubscriptionViewSet, UserAvatarUpdateView, user_me_view
 
 subscription_list = SubscriptionViewSet.as_view({"get": "list"})
