@@ -8,6 +8,7 @@ from users.models import CustomUser, Subscription
 
 CustomUser = get_user_model()  # noqa: F811
 
+
 class IsSubscribedMixin:
     def get_is_subscribed(self, obj):
         request = self.context.get("request")
@@ -17,8 +18,8 @@ class IsSubscribedMixin:
             ).exists()
         return False
 
-class CustomUserSerializer(serializers.ModelSerializer,
-                           IsSubscribedMixin):
+
+class CustomUserSerializer(serializers.ModelSerializer, IsSubscribedMixin):
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
@@ -65,13 +66,14 @@ class UserAvatarSerializer(CustomUserSerializer):
         fields = ("avatar",)
 
     def validate(self, attrs):
-        if 'avatar' not in attrs:
+        if "avatar" not in attrs:
             raise ValidationError({"avatar": "This field is required."})
         return super().validate(attrs)
 
 
-class CustomUserSubscriptionSerializer(serializers.ModelSerializer,
-                                       IsSubscribedMixin):
+class CustomUserSubscriptionSerializer(
+    serializers.ModelSerializer, IsSubscribedMixin
+):
     is_subscribed = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()

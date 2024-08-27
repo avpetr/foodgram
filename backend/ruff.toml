@@ -31,4 +31,4 @@ exclude = [
 
 line-length = 79
 indent-width = 4
-lint.select = ["W", "E5", "F"]
+lint.select = ["W", "E5", "F", "E"]

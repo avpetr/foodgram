@@ -6,13 +6,20 @@ from django.db.models import Sum
 from django.shortcuts import get_object_or_404, redirect
 from food.models import FavoriteRecipe, Ingredient, Recipe, ShoppingList, Tag
 from food.permissions import IsAuthorOrReadOnly
-from food.serializers import (IngredientSerializer, RecipeIngredient,
-                              RecipeSerializer, RecipeShortSerializer,
-                              TagSerializer)
+from food.serializers import (
+    IngredientSerializer,
+    RecipeIngredient,
+    RecipeSerializer,
+    RecipeShortSerializer,
+    TagSerializer,
+)
 from rest_framework import status, viewsets
 from rest_framework.filters import SearchFilter
-from rest_framework.permissions import (AllowAny, IsAuthenticated,
-                                        IsAuthenticatedOrReadOnly)
+from rest_framework.permissions import (
+    AllowAny,
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly,
+)
 from rest_framework.response import Response
 from rest_framework.views import APIView, View
 
@@ -149,12 +156,13 @@ class DownloadShoppingCart(APIView):
         except ShoppingList.DoesNotExist:
             return Response("No shopping list found.", status=404)
 
-        ingredients = RecipeIngredient.objects.filter(
-            recipe__in=shopping_list.recipes.all()
-        ).values(
-            "ingredient__name",
-            "ingredient__measurement_unit"
-        ).annotate(total_amount=Sum("amount"))
+        ingredients = (
+            RecipeIngredient.objects.filter(
+                recipe__in=shopping_list.recipes.all()
+            )
+            .values("ingredient__name", "ingredient__measurement_unit")
+            .annotate(total_amount=Sum("amount"))
+        )
 
         output = StringIO()
         writer = csv.writer(output)
@@ -177,6 +185,7 @@ class DownloadShoppingCart(APIView):
         )
 
         return response
+
 
 class FavoriteRecipeViewSet(viewsets.ViewSet, ShoppingCartMixin):
     permission_classes = [IsAuthenticated]

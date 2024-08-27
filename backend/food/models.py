@@ -134,8 +134,9 @@ class ShoppingList(models.Model):
         verbose_name = "Список покупок"
         verbose_name_plural = "Списки покупок"
         constraints = [
-            models.UniqueConstraint(fields=['user'],
-                                    name='unique_shopping_list_for_user')
+            models.UniqueConstraint(
+                fields=["user"], name="unique_shopping_list_for_user"
+            )
         ]
 
     def calculate_ingredients(self):
@@ -152,9 +153,9 @@ class ShoppingList(models.Model):
             if total_amount is not None:
                 total_amount = float(total_amount)
             ingredient_list[ingredient.id] = {
-                'name': ingredient.name,
-                'amount': total_amount,
-                'unit': ingredient.measurement_unit,
+                "name": ingredient.name,
+                "amount": total_amount,
+                "unit": ingredient.measurement_unit,
             }
 
         self.ingredients = ingredient_list
@@ -162,7 +163,6 @@ class ShoppingList(models.Model):
 
     def __str__(self):
         return f"Список покупок для {self.user.username}"
-
 
 
 class FavoriteRecipe(models.Model):
@@ -181,8 +181,9 @@ class FavoriteRecipe(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['user', 'recipe'],
-                                    name='unique_favorite_recipe')
+            models.UniqueConstraint(
+                fields=["user", "recipe"], name="unique_favorite_recipe"
+            )
         ]
         verbose_name = "Избранный рецепт"
         verbose_name_plural = "Избранные рецепты"

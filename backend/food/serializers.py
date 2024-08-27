@@ -1,6 +1,12 @@
 from drf_extra_fields.fields import Base64ImageField
-from food.models import (FavoriteRecipe, Ingredient, Recipe, RecipeIngredient,
-                         ShoppingList, Tag)
+from food.models import (
+    FavoriteRecipe,
+    Ingredient,
+    Recipe,
+    RecipeIngredient,
+    ShoppingList,
+    Tag,
+)
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
@@ -10,10 +16,12 @@ class TagSerializer(serializers.ModelSerializer):
         model = Tag
         fields = ["id", "name", "slug"]
 
+
 class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = Ingredient
         fields = ["id", "name", "measurement_unit"]
+
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
     ingredient = IngredientSerializer()
@@ -21,9 +29,6 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
     class Meta:
         model = RecipeIngredient
         fields = ["ingredient", "amount"]
-
-
-
 
 
 class RecipeSerializer(serializers.ModelSerializer):
@@ -145,20 +150,24 @@ class RecipeSerializer(serializers.ModelSerializer):
         ingredients = instance.recipeingredient_set.all()
         ingredients_representation = []
         for ingredient in ingredients:
-            ingredients_representation.append({
-                "id": ingredient.ingredient.id,
-                "name": ingredient.ingredient.name,
-                "measurement_unit": ingredient.ingredient.measurement_unit,
-                "amount": ingredient.amount,
-            })
+            ingredients_representation.append(
+                {
+                    "id": ingredient.ingredient.id,
+                    "name": ingredient.ingredient.name,
+                    "measurement_unit": ingredient.ingredient.measurement_unit,
+                    "amount": ingredient.amount,
+                }
+            )
         representation["ingredients"] = ingredients_representation
 
         return representation
+
 
 class RecipeShortSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ["id", "name", "image", "cooking_time"]
+
 
 class FavoriteRecipeSerializer(serializers.ModelSerializer):
     recipe = RecipeSerializer()

@@ -6,16 +6,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('users', '0001_initial'),
+        ("users", "0001_initial"),
     ]
 
     operations = [
         migrations.AlterUniqueTogether(
-            name='subscription',
+            name="subscription",
             unique_together=set(),
         ),
         migrations.AddConstraint(
-            model_name='subscription',
-            constraint=models.UniqueConstraint(fields=('user', 'subscribed_to'), name='unique_user_subscription'),
+            model_name="subscription",
+            constraint=models.UniqueConstraint(
+                fields=("user", "subscribed_to"),
+                name="unique_user_subscription",
+            ),
         ),
     ]
