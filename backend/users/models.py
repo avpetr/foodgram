@@ -1,9 +1,6 @@
 from django.conf import settings
-from django.contrib.auth.models import (
-    AbstractBaseUser,
-    BaseUserManager,
-    PermissionsMixin,
-)
+from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
+                                        PermissionsMixin)
 from django.core.validators import RegexValidator
 from django.db import models
 
@@ -72,7 +69,12 @@ class Subscription(models.Model):
     )
 
     class Meta:
-        unique_together = ("user", "subscribed_to")
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'subscribed_to'],
+                name='unique_user_subscription'
+            )
+        ]
         verbose_name = "Подписка"
         verbose_name_plural = "Подписки"
 

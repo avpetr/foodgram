@@ -5,11 +5,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from users.models import Subscription
 from users.pagination import CustomPagination
-from users.serializers import (
-    CustomUserSerializer,
-    CustomUserSubscriptionSerializer,
-    UserAvatarSerializer,
-)
+from users.serializers import (CustomUserSerializer,
+                               CustomUserSubscriptionSerializer,
+                               UserAvatarSerializer)
 
 CustomUser = get_user_model()
 
@@ -22,13 +20,6 @@ class UserAvatarUpdateView(generics.UpdateAPIView):
     def put(self, request):
         user = self.request.user
 
-        if not request.data:
-            return Response(
-                {"detail": "No data provided."},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        # Обработка загрузки аватара в формате Base64
         serializer = self.get_serializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         self.perform_update(serializer)
@@ -77,12 +68,9 @@ class SubscriptionViewSet(viewsets.ViewSet):
         paginated_subscriptions = paginator.paginate_queryset(
             subscriptions, request
         )
-        subscribed_users = [
-            sub.subscribed_to for sub in paginated_subscriptions
-        ]
 
         serializer = CustomUserSubscriptionSerializer(
-            subscribed_users,
+            [sub.subscribed_to for sub in paginated_subscriptions],
             many=True,
             context={"request": request, "recipes_limit": recipes_limit},
         )

@@ -2,21 +2,17 @@ import csv
 from io import StringIO
 
 from django.conf import settings
+from django.db.models import Sum
 from django.shortcuts import get_object_or_404, redirect
 from food.models import FavoriteRecipe, Ingredient, Recipe, ShoppingList, Tag
-from food.serializers import (
-    IngredientSerializer,
-    RecipeSerializer,
-    RecipeShortSerializer,
-    TagSerializer,
-)
+from food.permissions import IsAuthorOrReadOnly
+from food.serializers import (IngredientSerializer, RecipeIngredient,
+                              RecipeSerializer, RecipeShortSerializer,
+                              TagSerializer)
 from rest_framework import status, viewsets
 from rest_framework.filters import SearchFilter
-from rest_framework.permissions import (
-    AllowAny,
-    IsAuthenticated,
-    IsAuthenticatedOrReadOnly,
-)
+from rest_framework.permissions import (AllowAny, IsAuthenticated,
+                                        IsAuthenticatedOrReadOnly)
 from rest_framework.response import Response
 from rest_framework.views import APIView, View
 
@@ -42,7 +38,7 @@ class IngredientViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        name = self.request.query_params.get("name", None)
+        name = self.request.query_params.get("name")
         if name:
             name = name.lower()
             queryset = queryset.filter(name__istartswith=name)
@@ -52,7 +48,7 @@ class IngredientViewSet(viewsets.ModelViewSet):
 class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
 
     def get_queryset(self):
         queryset = super().get_queryset()
@@ -78,29 +74,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         return queryset
 
     def perform_create(self, serializer):
-        tags = self.request.data.get("tags", [])
         instance = serializer.save(author=self.request.user)
-        instance.tags.set(tags)
         return instance
-
-    def perform_update(self, serializer):
-        tags = self.request.data.get("tags", [])
-        instance = serializer.save()
-        if tags:
-            instance.tags.set(tags)
-        return instance
-
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-
-        if instance.author != request.user:
-            message = "You do not have permission to delete this recipe."
-            return Response(
-                {"detail": message},
-                status=status.HTTP_403_FORBIDDEN,
-            )
-
-        return super().destroy(request, *args, **kwargs)
 
 
 class RedirectShortLinkView(View):
@@ -119,17 +94,20 @@ class GetShortLinkView(APIView):
         return Response({"short-link": full_short_link}, status=200)
 
 
-class ManageShoppingCart(APIView):
+class ShoppingCartMixin:
+    def get_recipe_and_shopping_list(self, user, recipe_id):
+        recipe = get_object_or_404(Recipe, id=recipe_id)
+        shopping_list, created = ShoppingList.objects.get_or_create(user=user)
+        return recipe, shopping_list
+
+
+class ManageShoppingCart(APIView, ShoppingCartMixin):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, recipe_id):
-        user = request.user
-        try:
-            recipe = Recipe.objects.get(id=recipe_id)
-        except Recipe.DoesNotExist:
-            return Response({"detail": "Recipe not found."}, status=404)
-
-        shopping_list, created = ShoppingList.objects.get_or_create(user=user)
+        recipe, shopping_list = self.get_recipe_and_shopping_list(
+            request.user, recipe_id
+        )
 
         if recipe in shopping_list.recipes.all():
             return Response(
@@ -142,16 +120,9 @@ class ManageShoppingCart(APIView):
         return Response(serializer.data, status=201)
 
     def delete(self, request, recipe_id):
-        user = request.user
-        try:
-            recipe = Recipe.objects.get(id=recipe_id)
-        except Recipe.DoesNotExist:
-            return Response({"detail": "Recipe not found."}, status=404)
-
-        try:
-            shopping_list = ShoppingList.objects.get(user=user)
-        except ShoppingList.DoesNotExist:
-            return Response({"detail": "Shopping list not found."}, status=404)
+        recipe, shopping_list = self.get_recipe_and_shopping_list(
+            request.user, recipe_id
+        )
 
         if recipe not in shopping_list.recipes.all():
             return Response(
@@ -172,40 +143,48 @@ class DownloadShoppingCart(APIView):
     def get(self, request):
         user = request.user
 
+        # Попытка найти список покупок пользователя
         try:
             shopping_list = ShoppingList.objects.get(user=user)
         except ShoppingList.DoesNotExist:
             return Response("No shopping list found.", status=404)
 
+        ingredients = RecipeIngredient.objects.filter(
+            recipe__in=shopping_list.recipes.all()
+        ).values(
+            "ingredient__name",
+            "ingredient__measurement_unit"
+        ).annotate(total_amount=Sum("amount"))
+
         output = StringIO()
         writer = csv.writer(output)
-
         writer.writerow(["Ingredient", "Measurement Unit", "Amount"])
 
-        for item in shopping_list.items.all():
+        for item in ingredients:
             writer.writerow(
                 [
-                    item.ingredient.name,
-                    item.ingredient.measurement_unit,
-                    item.amount,
+                    item["ingredient__name"],
+                    item["ingredient__measurement_unit"],
+                    item["total_amount"],
                 ]
             )
 
+        # Сохранение данных и подготовка ответа
         output.seek(0)
         response = Response(output.getvalue(), content_type="text/csv")
         response["Content-Disposition"] = (
-            'attachment; filename="shopping_list.txt"'
+            'attachment; filename="shopping_list.csv"'
         )
 
         return response
 
-
-class FavoriteRecipeViewSet(viewsets.ViewSet):
+class FavoriteRecipeViewSet(viewsets.ViewSet, ShoppingCartMixin):
     permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
-        recipe_id = self.kwargs.get("recipe_id")
-        recipe = get_object_or_404(Recipe, pk=recipe_id)
+        recipe, _ = self.get_recipe_and_shopping_list(
+            request.user, self.kwargs.get("recipe_id")
+        )
 
         if FavoriteRecipe.objects.filter(
             user=request.user, recipe=recipe
@@ -221,8 +200,9 @@ class FavoriteRecipeViewSet(viewsets.ViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def destroy(self, request, *args, **kwargs):
-        recipe_id = self.kwargs.get("recipe_id")
-        recipe = get_object_or_404(Recipe, pk=recipe_id)
+        recipe, _ = self.get_recipe_and_shopping_list(
+            request.user, self.kwargs.get("recipe_id")
+        )
 
         favorite = FavoriteRecipe.objects.filter(
             user=request.user, recipe=recipe

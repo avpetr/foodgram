@@ -2,7 +2,7 @@ import hashlib
 
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import Sum
+from django.db.models import JSONField, Sum
 from users.models import CustomUser
 
 MAX_LENGTH = 150
@@ -43,7 +43,7 @@ class Recipe(models.Model):
         max_length=MAX_LENGTH, verbose_name="Название рецепта"
     )
     ingredients = models.ManyToManyField(
-        Ingredient, through="RecipeIngredients", verbose_name="Ингредиенты"
+        Ingredient, through="RecipeIngredient", verbose_name="Ингредиенты"
     )
     author = models.ForeignKey(
         CustomUser, on_delete=models.CASCADE, verbose_name="Автор"
@@ -95,7 +95,7 @@ class Recipe(models.Model):
         return f"Рецепт: {self.name} (Автор: {self.author.username})"
 
 
-class RecipeIngredients(models.Model):
+class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(
         Recipe, on_delete=models.CASCADE, verbose_name="Рецепт"
     )
@@ -128,55 +128,41 @@ class ShoppingList(models.Model):
     recipes = models.ManyToManyField(
         Recipe, related_name="shopping_lists", verbose_name="Рецепты"
     )
+    ingredients = JSONField(default=dict, verbose_name="Ингредиенты")
 
     class Meta:
         verbose_name = "Список покупок"
         verbose_name_plural = "Списки покупок"
+        constraints = [
+            models.UniqueConstraint(fields=['user'],
+                                    name='unique_shopping_list_for_user')
+        ]
 
     def calculate_ingredients(self):
-        self.items.all().delete()
-
         ingredients = Ingredient.objects.filter(
-            recipeingredients__recipe__in=self.recipes.all()
+            recipeingredient__recipe__in=self.recipes.all()
         ).distinct()
 
+        ingredient_list = {}
+
         for ingredient in ingredients:
-            total_amount = RecipeIngredients.objects.filter(
+            total_amount = RecipeIngredient.objects.filter(
                 recipe__in=self.recipes.all(), ingredient=ingredient
             ).aggregate(total_amount=Sum("amount"))["total_amount"]
+            if total_amount is not None:
+                total_amount = float(total_amount)
+            ingredient_list[ingredient.id] = {
+                'name': ingredient.name,
+                'amount': total_amount,
+                'unit': ingredient.measurement_unit,
+            }
 
-            ShoppingListItem.objects.create(
-                shopping_list=self, ingredient=ingredient, amount=total_amount
-            )
+        self.ingredients = ingredient_list
+        self.save()
 
     def __str__(self):
         return f"Список покупок для {self.user.username}"
 
-
-class ShoppingListItem(models.Model):
-    shopping_list = models.ForeignKey(
-        ShoppingList,
-        on_delete=models.CASCADE,
-        related_name="items",
-        verbose_name="Список покупок",
-    )
-    ingredient = models.ForeignKey(
-        Ingredient, on_delete=models.CASCADE, verbose_name="Ингредиент"
-    )
-    amount = models.DecimalField(
-        max_digits=6, decimal_places=2, verbose_name="Количество"
-    )
-
-    class Meta:
-        verbose_name = "Элемент списка покупок"
-        verbose_name_plural = "Элементы списка покупок"
-
-    def __str__(self):
-        return (
-            f"{self.amount} {self.ingredient.measurement_unit} "
-            f"{self.ingredient.name}"
-            f" в списке покупок {self.shopping_list.id}"
-        )
 
 
 class FavoriteRecipe(models.Model):
@@ -194,7 +180,10 @@ class FavoriteRecipe(models.Model):
     )
 
     class Meta:
-        unique_together = ("user", "recipe")
+        constraints = [
+            models.UniqueConstraint(fields=['user', 'recipe'],
+                                    name='unique_favorite_recipe')
+        ]
         verbose_name = "Избранный рецепт"
         verbose_name_plural = "Избранные рецепты"
 

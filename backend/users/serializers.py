@@ -8,8 +8,17 @@ from users.models import CustomUser, Subscription
 
 CustomUser = get_user_model()  # noqa: F811
 
+class IsSubscribedMixin:
+    def get_is_subscribed(self, obj):
+        request = self.context.get("request")
+        if request and request.user.is_authenticated:
+            return Subscription.objects.filter(
+                user=request.user, subscribed_to=obj
+            ).exists()
+        return False
 
-class CustomUserSerializer(serializers.ModelSerializer):
+class CustomUserSerializer(serializers.ModelSerializer,
+                           IsSubscribedMixin):
     is_subscribed = serializers.SerializerMethodField()
 
     class Meta:
@@ -25,12 +34,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
         )
 
     def get_is_subscribed(self, obj):
-        request = self.context.get("request")
-        if request and request.user.is_authenticated:
-            return Subscription.objects.filter(
-                user=request.user, subscribed_to=obj
-            ).exists()
-        return False
+        return super().get_is_subscribed(obj)
 
 
 class CustomUserCreateSerializer(UserCreateSerializer):
@@ -60,8 +64,14 @@ class UserAvatarSerializer(CustomUserSerializer):
         model = CustomUser
         fields = ("avatar",)
 
+    def validate(self, attrs):
+        if 'avatar' not in attrs:
+            raise ValidationError({"avatar": "This field is required."})
+        return super().validate(attrs)
 
-class CustomUserSubscriptionSerializer(serializers.ModelSerializer):
+
+class CustomUserSubscriptionSerializer(serializers.ModelSerializer,
+                                       IsSubscribedMixin):
     is_subscribed = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
@@ -81,19 +91,13 @@ class CustomUserSubscriptionSerializer(serializers.ModelSerializer):
         )
 
     def get_is_subscribed(self, obj):
-        request = self.context.get("request")
-        if request and request.user.is_authenticated:
-            return Subscription.objects.filter(
-                user=request.user, subscribed_to=obj
-            ).exists()
-        return False
+        return super().get_is_subscribed(obj)
 
     def get_recipes(self, obj):
         request = self.context.get("request")
         recipes_limit = self.context.get("recipes_limit")
         recipes = Recipe.objects.filter(author=obj)
 
-        recipes_limit = self.context.get("recipes_limit")
         if recipes_limit is not None:
             recipes_limit = int(recipes_limit)
             recipes = recipes[:recipes_limit]
