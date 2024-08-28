@@ -3,13 +3,12 @@ from rest_framework import generics, status, viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
 from users.models import Subscription
 from users.pagination import CustomPagination
-from users.serializers import (
-    CustomUserSerializer,
-    CustomUserSubscriptionSerializer,
-    UserAvatarSerializer,
-)
+from users.serializers import (CustomUserSerializer,
+                               CustomUserSubscriptionSerializer,
+                               UserAvatarSerializer)
 
 CustomUser = get_user_model()
 
@@ -61,22 +60,20 @@ class SubscriptionViewSet(viewsets.ViewSet):
     def list(self, request):
         recipes_limit = request.query_params.get("recipes_limit", None)
         limit = request.query_params.get("limit", None)
-
-        subscriptions = Subscription.objects.filter(user=request.user)
+        subscriptions = Subscription.objects.filter(
+            user=request.user
+        ).values_list("subscribed_to", flat=True)
         if limit:
             subscriptions = subscriptions[: int(limit)]
-
         paginator = self.pagination_class()
         paginated_subscriptions = paginator.paginate_queryset(
             subscriptions, request
         )
-
         serializer = CustomUserSubscriptionSerializer(
-            [sub.subscribed_to for sub in paginated_subscriptions],
+            CustomUser.objects.filter(id__in=paginated_subscriptions),
             many=True,
             context={"request": request, "recipes_limit": recipes_limit},
         )
-
         return paginator.get_paginated_response(serializer.data)
 
     def create(self, request, *args, **kwargs):

@@ -1,14 +1,9 @@
 from drf_extra_fields.fields import Base64ImageField
-from food.models import (
-    FavoriteRecipe,
-    Ingredient,
-    Recipe,
-    RecipeIngredient,
-    ShoppingList,
-    Tag,
-)
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+
+from food.models import (FavoriteRecipe, Ingredient, Recipe, RecipeIngredient,
+                         ShoppingList, Tag)
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -24,11 +19,16 @@ class IngredientSerializer(serializers.ModelSerializer):
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
-    ingredient = IngredientSerializer()
+    id = serializers.IntegerField(source="ingredient.id")
+    name = serializers.CharField(source="ingredient.name")
+    measurement_unit = serializers.CharField(
+        source="ingredient.measurement_unit"
+    )
+    amount = serializers.FloatField()
 
     class Meta:
         model = RecipeIngredient
-        fields = ["ingredient", "amount"]
+        fields = ["id", "name", "measurement_unit", "amount"]
 
 
 class RecipeSerializer(serializers.ModelSerializer):
@@ -148,16 +148,10 @@ class RecipeSerializer(serializers.ModelSerializer):
         representation = super().to_representation(instance)
 
         ingredients = instance.recipeingredient_set.all()
-        ingredients_representation = []
-        for ingredient in ingredients:
-            ingredients_representation.append(
-                {
-                    "id": ingredient.ingredient.id,
-                    "name": ingredient.ingredient.name,
-                    "measurement_unit": ingredient.ingredient.measurement_unit,
-                    "amount": ingredient.amount,
-                }
-            )
+        ingredients_representation = RecipeIngredientSerializer(
+            ingredients, many=True
+        ).data
+
         representation["ingredients"] = ingredients_representation
 
         return representation

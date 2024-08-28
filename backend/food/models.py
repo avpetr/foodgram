@@ -2,7 +2,8 @@ import hashlib
 
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import JSONField, Sum
+from django.db.models import JSONField, UniqueConstraint
+
 from users.models import CustomUser
 
 MAX_LENGTH = 150
@@ -109,6 +110,12 @@ class RecipeIngredient(models.Model):
     class Meta:
         verbose_name = "Ингредиент рецепта"
         verbose_name_plural = "Ингредиенты рецепта"
+        constraints = [
+            UniqueConstraint(
+                fields=["recipe", "ingredient"],
+                name="unique_recipe_ingredient",
+            )
+        ]
 
     def __str__(self):
         return (
@@ -138,28 +145,6 @@ class ShoppingList(models.Model):
                 fields=["user"], name="unique_shopping_list_for_user"
             )
         ]
-
-    def calculate_ingredients(self):
-        ingredients = Ingredient.objects.filter(
-            recipeingredient__recipe__in=self.recipes.all()
-        ).distinct()
-
-        ingredient_list = {}
-
-        for ingredient in ingredients:
-            total_amount = RecipeIngredient.objects.filter(
-                recipe__in=self.recipes.all(), ingredient=ingredient
-            ).aggregate(total_amount=Sum("amount"))["total_amount"]
-            if total_amount is not None:
-                total_amount = float(total_amount)
-            ingredient_list[ingredient.id] = {
-                "name": ingredient.name,
-                "amount": total_amount,
-                "unit": ingredient.measurement_unit,
-            }
-
-        self.ingredients = ingredient_list
-        self.save()
 
     def __str__(self):
         return f"Список покупок для {self.user.username}"
