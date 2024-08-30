@@ -74,8 +74,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         return queryset
 
-    # Если убрать этот метод, то не будет работать сохранение с автором.
-    # Не совсем понятно, как иначе
     def perform_create(self, serializer):
         instance = serializer.save(author=self.request.user)
         return instance
@@ -97,68 +95,59 @@ class GetShortLinkView(APIView):
         return Response({"short-link": full_short_link}, status=200)
 
 
-class BaseRecipeMixin:
+
+class ShoppingCartMixin:
     def get_recipe_and_shopping_list(self, user, recipe_id, model):
         recipe = get_object_or_404(Recipe, id=recipe_id)
-        instance, created = model.objects.get_or_create(
-            user=user, recipe=recipe
-        )
-        return recipe, instance
-
-    def check_recipe_in_list(self, recipe, user, model):
-        return model.objects.filter(user=user, recipe=recipe).exists()
-
-    def add_recipe_to_list(self, recipe, user, model):
-        model.objects.create(user=user, recipe=recipe)
-
-    def remove_recipe_from_list(self, recipe, user, model):
-        entry = model.objects.filter(user=user, recipe=recipe).first()
-        if entry:
-            entry.delete()
-            return True
-        return False
-
-    def add_item(self, request, model, list_name):
-        recipe, model_list = self.get_recipe_and_shopping_list(
-            request.user, self.kwargs.get("recipe_id"), model
-        )
-
-        if self.check_recipe_in_list(recipe, request.user, model):
+        
+        if model == FavoriteRecipe:
+            favorite_recipe, created = model.objects.get_or_create(user=user, recipe=recipe)
+            return recipe, favorite_recipe
+        else:
+            shopping_list, created = model.objects.get_or_create(user=user)
+            return recipe, shopping_list
+    
+    def get_recipe(self, recipe_id):
+        return get_object_or_404(Recipe, id=recipe_id)
+    
+    def add_item(self, request, model, name, *args, **kwargs):
+        recipe = self.get_recipe(self.kwargs.get("recipe_id"))
+        
+        if model.objects.filter(user=request.user, recipe=recipe).exists():
             return Response(
-                {"detail": f"Recipe already in {list_name}."},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"detail": f"Recipe already in {name}."}, status=400
             )
-
-        self.add_recipe_to_list(recipe, request.user, model)
-
+        
+        if model == FavoriteRecipe:
+            model.objects.create(user=request.user, recipe=recipe)
+        else:
+            shopping_list, created = model.objects.get_or_create(user=request.user)
+            shopping_list.recipe.add(recipe)
+        
         serializer = RecipeShortSerializer(recipe)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-class ManageShoppingCart(APIView, BaseRecipeMixin):
+class ManageShoppingCart(APIView, ShoppingCartMixin):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, recipe_id):
-        recipe, serializer, shopping_list = self.add_item(
-            request, ShoppingList, "shopping list"
-        )
-        shopping_list.recipes.add(recipe)
-        serializer = RecipeShortSerializer(recipe)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    def post(self, request, recipe_id, *args, **kwargs):
+        return self.add_item(request, ShoppingList, 'shopping cart', *args, **kwargs)
 
     def delete(self, request, recipe_id):
         recipe, shopping_list = self.get_recipe_and_shopping_list(
             request.user, recipe_id, ShoppingList
         )
-        if not shopping_list.recipes.filter(id=recipe.id).exists():
+
+        if not shopping_list.recipe.filter(id=recipe.id).exists():
             return Response(
                 {"detail": "Recipe not in shopping cart."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        shopping_list.recipes.remove(recipe)
+
+        shopping_list.recipe.remove(recipe)
         return Response(
-            {"detail": "Recipe removed from shopping cart."},
-            status=status.HTTP_204_NO_CONTENT,
+            {"detail": "Recipe removed from shopping cart."}, status=204
         )
 
 
@@ -175,7 +164,7 @@ class DownloadShoppingCart(APIView):
 
         ingredients = (
             RecipeIngredient.objects.filter(
-                recipe__in=shopping_list.recipes.all()
+                recipe__in=shopping_list.recipe.all()
             )
             .values("ingredient__name", "ingredient__measurement_unit")
             .annotate(total_amount=Sum("amount"))
@@ -203,22 +192,25 @@ class DownloadShoppingCart(APIView):
         return response
 
 
-class FavoriteRecipeViewSet(viewsets.ViewSet, BaseRecipeMixin):
+class FavoriteRecipeViewSet(viewsets.ViewSet, ShoppingCartMixin):
+    permission_classes = [IsAuthenticated]
+
     def create(self, request, *args, **kwargs):
-        return self.add_item(request, FavoriteRecipe, "favorites")
-
-    def destroy(self, request, *args, **kwargs):
-        recipe, _ = self.get_recipe_and_shopping_list(
-            request.user, self.kwargs.get("recipe_id"), FavoriteRecipe
+        return self.add_item(request, FavoriteRecipe, 'favorites', *args, **kwargs)
+        
+    def destroy(self, request, recipe_id):
+        recipe, favorite_recipe = self.get_recipe_and_shopping_list(
+            request.user, recipe_id, FavoriteRecipe
         )
-
-        if self.remove_recipe_from_list(recipe, request.user, FavoriteRecipe):
+        
+        if not favorite_recipe:
             return Response(
-                {"detail": "Recipe removed from favorites."},
-                status=status.HTTP_204_NO_CONTENT,
+                {"detail": "Recipe not in favorites."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
+        favorite_recipe.delete()
         return Response(
-            {"detail": "Recipe not in favorites."},
-            status=status.HTTP_400_BAD_REQUEST,
+            {"detail": "Recipe removed from favorites."},
+            status=status.HTTP_204_NO_CONTENT,
         )

@@ -2,8 +2,14 @@ from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from food.models import (FavoriteRecipe, Ingredient, Recipe, RecipeIngredient,
-                         ShoppingList, Tag)
+from food.models import (
+    FavoriteRecipe,
+    Ingredient,
+    Recipe,
+    RecipeIngredient,
+    ShoppingList,
+    Tag,
+)
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -74,7 +80,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         request = self.context.get("request")
         if request and request.user.is_authenticated:
             return ShoppingList.objects.filter(
-                user=request.user, recipes=obj
+                user=request.user, recipe=obj
             ).exists()
         return False
 

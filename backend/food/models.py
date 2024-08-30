@@ -132,7 +132,7 @@ class ShoppingList(models.Model):
         related_name="shopping_lists",
         verbose_name="Пользователь",
     )
-    recipes = models.ManyToManyField(
+    recipe = models.ManyToManyField(
         Recipe, related_name="shopping_lists", verbose_name="Рецепты"
     )
     ingredients = JSONField(default=dict, verbose_name="Ингредиенты")
@@ -154,7 +154,7 @@ class FavoriteRecipe(models.Model):
     user = models.ForeignKey(
         CustomUser,
         on_delete=models.CASCADE,
-        related_name="favorite_recipes_set",
+        related_name="favorite_recipe_set",
         verbose_name="Пользователь",
     )
     recipe = models.ForeignKey(
