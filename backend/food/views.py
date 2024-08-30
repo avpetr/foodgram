@@ -12,6 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView, View
 
 from food.models import FavoriteRecipe, Ingredient, Recipe, ShoppingList, Tag
+from food.pagination import CustomPageNumberPagination 
 from food.permissions import IsAuthorOrReadOnly
 from food.serializers import (IngredientSerializer, RecipeIngredient,
                               RecipeSerializer, RecipeShortSerializer,
@@ -50,7 +51,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     queryset = Recipe.objects.all()
     serializer_class = RecipeSerializer
     permission_classes = [IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
-
+    pagination_class = CustomPageNumberPagination
+    
     def get_queryset(self):
         queryset = super().get_queryset()
 
