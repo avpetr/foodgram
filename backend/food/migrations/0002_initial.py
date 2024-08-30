@@ -75,7 +75,9 @@ class Migration(migrations.Migration):
             model_name="shoppinglist",
             name="recipes",
             field=models.ManyToManyField(
-                related_name="shopping_lists", to="food.recipe", verbose_name="Рецепты"
+                related_name="shopping_lists",
+                to="food.recipe",
+                verbose_name="Рецепты",
             ),
         ),
         migrations.AddField(
@@ -92,7 +94,10 @@ class Migration(migrations.Migration):
             model_name="recipe",
             name="tags",
             field=models.ManyToManyField(
-                blank=True, related_name="recipes", to="food.tag", verbose_name="Теги"
+                blank=True,
+                related_name="recipes",
+                to="food.tag",
+                verbose_name="Теги",
             ),
         ),
         migrations.AddConstraint(
@@ -104,7 +109,8 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="recipeingredient",
             constraint=models.UniqueConstraint(
-                fields=("recipe", "ingredient"), name="unique_recipe_ingredient"
+                fields=("recipe", "ingredient"),
+                name="unique_recipe_ingredient",
             ),
         ),
         migrations.AddConstraint(

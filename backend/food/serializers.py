@@ -12,7 +12,6 @@ from food.models import (
 )
 
 
-
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag

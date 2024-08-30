@@ -6,17 +6,24 @@ from django.db.models import Sum
 from django.shortcuts import get_object_or_404, redirect
 from rest_framework import status, viewsets
 from rest_framework.filters import SearchFilter
-from rest_framework.permissions import (AllowAny, IsAuthenticated,
-                                        IsAuthenticatedOrReadOnly)
+from rest_framework.permissions import (
+    AllowAny,
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly,
+)
 from rest_framework.response import Response
 from rest_framework.views import APIView, View
 
 from food.models import FavoriteRecipe, Ingredient, Recipe, ShoppingList, Tag
-from food.pagination import CustomPageNumberPagination 
+from food.pagination import CustomPageNumberPagination
 from food.permissions import IsAuthorOrReadOnly
-from food.serializers import (IngredientSerializer, RecipeIngredient,
-                              RecipeSerializer, RecipeShortSerializer,
-                              TagSerializer)
+from food.serializers import (
+    IngredientSerializer,
+    RecipeIngredient,
+    RecipeSerializer,
+    RecipeShortSerializer,
+    TagSerializer,
+)
 
 
 class TagViewSet(viewsets.ModelViewSet):
@@ -52,7 +59,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = RecipeSerializer
     permission_classes = [IsAuthenticatedOrReadOnly, IsAuthorOrReadOnly]
     pagination_class = CustomPageNumberPagination
-    
+
     def get_queryset(self):
         queryset = super().get_queryset()
 
@@ -97,35 +104,38 @@ class GetShortLinkView(APIView):
         return Response({"short-link": full_short_link}, status=200)
 
 
-
 class ShoppingCartMixin:
     def get_recipe_and_shopping_list(self, user, recipe_id, model):
         recipe = get_object_or_404(Recipe, id=recipe_id)
-        
+
         if model == FavoriteRecipe:
-            favorite_recipe, created = model.objects.get_or_create(user=user, recipe=recipe)
+            favorite_recipe, created = model.objects.get_or_create(
+                user=user, recipe=recipe
+            )
             return recipe, favorite_recipe
         else:
             shopping_list, created = model.objects.get_or_create(user=user)
             return recipe, shopping_list
-    
+
     def get_recipe(self, recipe_id):
         return get_object_or_404(Recipe, id=recipe_id)
-    
+
     def add_item(self, request, model, name, *args, **kwargs):
         recipe = self.get_recipe(self.kwargs.get("recipe_id"))
-        
+
         if model.objects.filter(user=request.user, recipe=recipe).exists():
             return Response(
                 {"detail": f"Recipe already in {name}."}, status=400
             )
-        
+
         if model == FavoriteRecipe:
             model.objects.create(user=request.user, recipe=recipe)
         else:
-            shopping_list, created = model.objects.get_or_create(user=request.user)
+            shopping_list, created = model.objects.get_or_create(
+                user=request.user
+            )
             shopping_list.recipe.add(recipe)
-        
+
         serializer = RecipeShortSerializer(recipe)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -134,7 +144,9 @@ class ManageShoppingCart(APIView, ShoppingCartMixin):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, recipe_id, *args, **kwargs):
-        return self.add_item(request, ShoppingList, 'shopping cart', *args, **kwargs)
+        return self.add_item(
+            request, ShoppingList, "shopping cart", *args, **kwargs
+        )
 
     def delete(self, request, recipe_id):
         recipe, shopping_list = self.get_recipe_and_shopping_list(
@@ -198,13 +210,15 @@ class FavoriteRecipeViewSet(viewsets.ViewSet, ShoppingCartMixin):
     permission_classes = [IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
-        return self.add_item(request, FavoriteRecipe, 'favorites', *args, **kwargs)
-        
+        return self.add_item(
+            request, FavoriteRecipe, "favorites", *args, **kwargs
+        )
+
     def destroy(self, request, recipe_id):
         recipe, favorite_recipe = self.get_recipe_and_shopping_list(
             request.user, recipe_id, FavoriteRecipe
         )
-        
+
         if not favorite_recipe:
             return Response(
                 {"detail": "Recipe not in favorites."},

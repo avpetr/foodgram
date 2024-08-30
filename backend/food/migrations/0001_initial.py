@@ -49,7 +49,9 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "measurement_unit",
-                    models.CharField(max_length=150, verbose_name="Единица измерения"),
+                    models.CharField(
+                        max_length=150, verbose_name="Единица измерения"
+                    ),
                 ),
             ],
             options={
@@ -71,7 +73,9 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "name",
-                    models.CharField(max_length=150, verbose_name="Название рецепта"),
+                    models.CharField(
+                        max_length=150, verbose_name="Название рецепта"
+                    ),
                 ),
                 ("text", models.TextField(verbose_name="Описание рецепта")),
                 (
@@ -86,7 +90,9 @@ class Migration(migrations.Migration):
                 (
                     "cooking_time",
                     models.PositiveIntegerField(
-                        validators=[django.core.validators.MinValueValidator(1)],
+                        validators=[
+                            django.core.validators.MinValueValidator(1)
+                        ],
                         verbose_name="Время приготовления (в минутах)",
                     ),
                 ),
@@ -121,7 +127,9 @@ class Migration(migrations.Migration):
                 (
                     "amount",
                     models.DecimalField(
-                        decimal_places=2, max_digits=6, verbose_name="Количество"
+                        decimal_places=2,
+                        max_digits=6,
+                        verbose_name="Количество",
                     ),
                 ),
             ],
@@ -166,9 +174,14 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "name",
-                    models.CharField(max_length=150, verbose_name="Название тега"),
+                    models.CharField(
+                        max_length=150, verbose_name="Название тега"
+                    ),
                 ),
-                ("slug", models.SlugField(unique=True, verbose_name="Слаг тега")),
+                (
+                    "slug",
+                    models.SlugField(unique=True, verbose_name="Слаг тега"),
+                ),
             ],
             options={
                 "verbose_name": "Тег",

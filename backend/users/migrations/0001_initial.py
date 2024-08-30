@@ -27,7 +27,10 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("password", models.CharField(max_length=128, verbose_name="password")),
+                (
+                    "password",
+                    models.CharField(max_length=128, verbose_name="password"),
+                ),
                 (
                     "last_login",
                     models.DateTimeField(
@@ -45,7 +48,9 @@ class Migration(migrations.Migration):
                 (
                     "email",
                     models.EmailField(
-                        max_length=254, unique=True, verbose_name="Электронная почта"
+                        max_length=254,
+                        unique=True,
+                        verbose_name="Электронная почта",
                     ),
                 ),
                 (
@@ -62,8 +67,14 @@ class Migration(migrations.Migration):
                         verbose_name="Имя пользователя",
                     ),
                 ),
-                ("first_name", models.CharField(max_length=150, verbose_name="Имя")),
-                ("last_name", models.CharField(max_length=150, verbose_name="Фамилия")),
+                (
+                    "first_name",
+                    models.CharField(max_length=150, verbose_name="Имя"),
+                ),
+                (
+                    "last_name",
+                    models.CharField(max_length=150, verbose_name="Фамилия"),
+                ),
                 (
                     "avatar",
                     models.ImageField(
@@ -79,7 +90,9 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "is_staff",
-                    models.BooleanField(default=False, verbose_name="Сотрудник"),
+                    models.BooleanField(
+                        default=False, verbose_name="Сотрудник"
+                    ),
                 ),
                 (
                     "groups",
