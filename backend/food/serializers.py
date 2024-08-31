@@ -10,7 +10,6 @@ from food.models import (
     ShoppingList,
     Tag,
 )
-
 from users.models import Subscription
 
 
@@ -89,7 +88,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     def validate(self, data):
         if self.instance is None and not data.get("image"):
             raise ValidationError("An image is required.")
-        
+
         tags_data = self.context["request"].data.get("tags", [])
         ingredients_data = self.context["request"].data.get("ingredients", [])
 

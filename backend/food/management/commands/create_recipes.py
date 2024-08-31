@@ -1,11 +1,12 @@
-import csv
 import base64
-from django.core.management.base import BaseCommand
-from django.core.files.base import ContentFile
-from random import randint, choice, sample
-from django.contrib.auth import get_user_model
+import csv
+from random import choice, randint, sample
 
-from food.models import Recipe, Ingredient, RecipeIngredient, Tag
+from django.contrib.auth import get_user_model
+from django.core.files.base import ContentFile
+from django.core.management.base import BaseCommand
+
+from food.models import Ingredient, Recipe, RecipeIngredient, Tag
 
 
 class Command(BaseCommand):
@@ -26,14 +27,12 @@ class Command(BaseCommand):
         ingredients_path = options["ingredients"]
         image_path = options["image"]
 
-        # Convert image to base64
         def convert_image_to_base64(image_path):
             with open(image_path, "rb") as image_file:
                 return base64.b64encode(image_file.read()).decode("utf-8")
 
         sample_image_base64 = convert_image_to_base64(image_path)
 
-        # Create or get the superuser
         User = get_user_model()
         superuser_email = "admin@example.com"
         superuser_password = "admin"
@@ -56,12 +55,11 @@ class Command(BaseCommand):
         else:
             self.stdout.write(self.style.WARNING("Superuser already exists."))
 
-        # Load ingredients from the CSV file
         ingredients = []
         with open(ingredients_path, newline="", encoding="utf-8") as csvfile:
             reader = csv.reader(csvfile, delimiter=",")
             for row in reader:
-                if len(row) == 2:  # Ensure there are exactly two columns
+                if len(row) == 2:  
                     name, measurement_unit = row
                     name = name.strip()
                     measurement_unit = measurement_unit.strip()
@@ -70,7 +68,6 @@ class Command(BaseCommand):
                     )
                     ingredients.append(ingredient)
 
-        # Create or get users
         users = []
         for i in range(5):
             email = f"user{i}@example.com"
@@ -88,7 +85,6 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.SUCCESS(f"Created user: {email}"))
             users.append(user)
 
-        # Create or get tags
         tag_names = ["Соленый", "Жареный", "Острый", "Кислый", "Сладкий"]
         tags = []
         for tag_name in tag_names:
@@ -102,7 +98,6 @@ class Command(BaseCommand):
                 )
             tags.append(tag)
 
-        # Create Recipes
         for i in range(10):
             author = choice(users)
 

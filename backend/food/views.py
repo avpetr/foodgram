@@ -1,5 +1,3 @@
-import csv
-from io import StringIO
 import os
 
 from django.conf import settings
@@ -186,29 +184,47 @@ class DownloadShoppingCart(APIView):
             .annotate(total_amount=Sum("amount"))
         )
 
-        # Определяем максимальные длины для выравнивания столбцов
-        max_len_name = max(len("Ингредиент"), max(len(item["ingredient__name"]) for item in ingredients))
-        max_len_unit = max(len("Единица измерения"), max(len(item["ingredient__measurement_unit"]) for item in ingredients))
-        max_len_amount = max(len("Количество"), max(len(f"{item['total_amount']:.2f}") for item in ingredients))
+        max_len_name = max(
+            len("Ингредиент"),
+            max(len(item["ingredient__name"]) for item in ingredients),
+        )
+        max_len_unit = max(
+            len("Единица измерения"),
+            max(
+                len(item["ingredient__measurement_unit"])
+                for item in ingredients
+            ),
+        )
+        max_len_amount = max(
+            len("Количество"),
+            max(len(f"{item['total_amount']:.2f}") for item in ingredients),
+        )
 
-        # Создаем временный файл
-        file_path = os.path.join(os.path.dirname(__file__), 'shopping_list.txt')
-        
-        with open(file_path, 'w', encoding='utf-8') as file:
-            # Добавляем заголовок
+        file_path = os.path.join(
+            os.path.dirname(__file__), "shopping_list.txt"
+        )
+
+        with open(file_path, "w", encoding="utf-8") as file:
             file.write(f"Список покупок для пользователя: {user.email}\n\n")
-            
-            # Заголовок таблицы
-            file.write(f"{'Ингредиент'.ljust(max_len_name)} | {'Единица измерения'.ljust(max_len_unit)} | {'Количество'.rjust(max_len_amount)}\n")
-            file.write("-" * (max_len_name + max_len_unit + max_len_amount + 6) + "\n")
-            
-            # Строки с ингредиентами
+
+            file.write(
+                (
+                    f"{'Ингредиент'.ljust(max_len_name)} | "
+                    f"{'Единица измерения'.ljust(max_len_unit)}"
+                    f" | {'Количество'.rjust(max_len_amount)}\n"
+                )
+            )
+            file.write(
+                "-" * (max_len_name + max_len_unit + max_len_amount + 6) + "\n"
+            )
+
             for item in ingredients:
                 name = item["ingredient__name"].ljust(max_len_name)
-                measurement_unit = item["ingredient__measurement_unit"].ljust(max_len_unit)
-                total_amount = item['total_amount']
-                
-                # Проверка, целое ли число
+                measurement_unit = item["ingredient__measurement_unit"].ljust(
+                    max_len_unit
+                )
+                total_amount = item["total_amount"]
+
                 if total_amount == total_amount.to_integral_value():
                     total_amount = f"{int(total_amount)}"
                 else:
@@ -217,12 +233,12 @@ class DownloadShoppingCart(APIView):
                 total_amount = total_amount.rjust(max_len_amount)
                 file.write(f"{name} | {measurement_unit} | {total_amount}\n")
 
-        # Открываем файл для чтения и отправки пользователю
-        with open(file_path, 'r', encoding='utf-8') as file:
-            response = HttpResponse(file.read(), content_type='text/plain')
-            response['Content-Disposition'] = f'attachment; filename="shopping_list.txt"'
+        with open(file_path, "r", encoding="utf-8") as file:
+            response = HttpResponse(file.read(), content_type="text/plain")
+            response["Content-Disposition"] = (
+                'attachment; filename="shopping_list.txt"'
+            )
 
-        # Удаляем временный файл
         os.remove(file_path)
 
         return response
