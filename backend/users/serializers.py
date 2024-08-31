@@ -35,9 +35,6 @@ class CustomUserSerializer(serializers.ModelSerializer, IsSubscribedMixin):
             "avatar",
         )
 
-    def get_is_subscribed(self, obj):
-        return super().get_is_subscribed(obj)
-
 
 class CustomUserCreateSerializer(UserCreateSerializer):
     class Meta(UserCreateSerializer.Meta):
@@ -92,9 +89,6 @@ class CustomUserSubscriptionSerializer(
             "recipes_count",
             "avatar",
         )
-
-    def get_is_subscribed(self, obj):
-        return super().get_is_subscribed(obj)
 
     def get_recipes(self, obj):
         request = self.context.get("request")

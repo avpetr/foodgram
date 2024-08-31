@@ -11,6 +11,8 @@ from food.models import (
     Tag,
 )
 
+from users.models import Subscription
+
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
@@ -85,6 +87,9 @@ class RecipeSerializer(serializers.ModelSerializer):
         return False
 
     def validate(self, data):
+        if self.instance is None and not data.get("image"):
+            raise ValidationError("An image is required.")
+        
         tags_data = self.context["request"].data.get("tags", [])
         ingredients_data = self.context["request"].data.get("ingredients", [])
 
@@ -110,9 +115,6 @@ class RecipeSerializer(serializers.ModelSerializer):
             if ingredient_data["id"] in seen_ingredient_ids:
                 raise ValidationError("Duplicate ingredients are not allowed.")
             seen_ingredient_ids.add(ingredient_data["id"])
-
-        if not data.get("image"):
-            raise ValidationError("An image is required.")
 
         return data
 
@@ -142,8 +144,13 @@ class RecipeSerializer(serializers.ModelSerializer):
         tags_data = self.context["request"].data.get("tags", [])
         ingredients_data = self.context["request"].data.get("ingredients", [])
 
+        image = validated_data.pop("image", None)
+        if image is not None:
+            instance.image = image
+
         instance = super().update(instance, validated_data)
 
+        # Обновляем теги и ингредиенты
         instance.tags.set(tags_data)
         instance.recipeingredient_set.all().delete()
         self.create_recipe_ingredients(instance, ingredients_data)
@@ -157,8 +164,15 @@ class RecipeSerializer(serializers.ModelSerializer):
         ingredients_representation = RecipeIngredientSerializer(
             ingredients, many=True
         ).data
-
         representation["ingredients"] = ingredients_representation
+
+        request = self.context.get("request")
+        if request and request.user.is_authenticated:
+            author = instance.author
+            is_subscribed = Subscription.objects.filter(
+                user=request.user, subscribed_to=author
+            ).exists()
+            representation["author"]["is_subscribed"] = is_subscribed
 
         return representation
 

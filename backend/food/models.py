@@ -74,6 +74,7 @@ class Recipe(models.Model):
     class Meta:
         verbose_name = "Рецепт"
         verbose_name_plural = "Рецепты"
+        
 
     def get_short_link(self):
         return self.short_link
