@@ -1,7 +1,6 @@
 ![example workflow](https://github.com/avpetr/foodgram/actions/workflows/workflow.yml/badge.svg)
 # Проект Foodgram
 Foodgram - соцсеть для рецептов.
-[Ссылка на сайт](https://avpetr.zapto.org/)
 ## Запуск проекта
 1. Для запуска проекта необходимо загрузить файл _docker-compose.production.yml_
 2. Создать файл .env в той же директории и заполнить следующим образом:
